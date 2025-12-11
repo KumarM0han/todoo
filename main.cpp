@@ -20,6 +20,9 @@ int main(int argc, char *argv[])
         }
     }
     MainWindow w;
+    w.Init();
+    w.MakeConnections();
+    w.SetLayout();
     w.show();
     return a.exec();
 }

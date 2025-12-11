@@ -16,50 +16,64 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-
-    QWidget* central_widget = new QWidget(this);
-    setCentralWidget(central_widget);
-
-    QLineEdit* line = new QLineEdit;
-    line->setMaxLength(256);
-
-    QPushButton *add_todo_button = new QPushButton("Add", this);
-    QStandardItemModel* todos_model = new QStandardItemModel(this);
-    QListView *l = new QListView(central_widget);
-    l->setModel(todos_model);
-    l->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    connect(l, &QAbstractItemView::doubleClicked, this, [=] (const QModelIndex& index) {
-        QString current = index.data(Qt::DisplayRole).toString();
-        bool ok{};
-        QString updated_todo = QInputDialog::getText(this, "Edit Todo", "Enter new todo", QLineEdit::Normal, current, &ok);
-        if (ok && !updated_todo.isEmpty()) {
-            todos_model->setData(index, updated_todo);
-        }
-    });
-
-    connect(add_todo_button, &QPushButton::clicked, this, [=] () {
-        if (line->hasAcceptableInput()) {
-            QString entered_line = line->text();
-            if (entered_line.isEmpty() == false) {
-                line->clear();
-                QStandardItem *item = new QStandardItem(entered_line);
-                item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable | Qt::ItemIsUserCheckable);
-                item->setData(Qt::Unchecked, Qt::CheckStateRole);
-                todos_model->appendRow(item);
-            }
-        }
-    });
-
-    connect(line, &QLineEdit::returnPressed, add_todo_button, &QPushButton::click);
-
-    QVBoxLayout *layout = new QVBoxLayout(central_widget);
-    layout->addWidget(line);
-    layout->addWidget(add_todo_button);
-    layout->addWidget(l);
-    central_widget->setLayout(layout);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+
+}
+
+
+void MainWindow::Init()
+{
+    m_central_widget = new QWidget(this);
+    setCentralWidget(m_central_widget);
+
+    m_line = new QLineEdit(this);
+    m_line->setMaxLength(256);
+
+    m_task_add_button = new QPushButton("Add", this);
+
+    m_todo_model = new QStandardItemModel(this);
+
+    m_todo_view = new QListView(this);
+    m_todo_view->setModel(m_todo_model);
+    m_todo_view->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    m_layout = new QVBoxLayout(m_central_widget);
+}
+
+void MainWindow::SetLayout()
+{
+    m_layout->addWidget(m_line);
+    m_layout->addWidget(m_task_add_button);
+    m_layout->addWidget(m_todo_view);
+}
+
+void MainWindow::MakeConnections()
+{
+    connect(m_task_add_button, &QPushButton::clicked, this, [this] () {
+        if (m_line->hasAcceptableInput()) {
+            QString entered_line = m_line->text();
+            if (entered_line.isEmpty() == false) {
+                m_line->clear();
+                QStandardItem *item = new QStandardItem(entered_line);
+                item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable | Qt::ItemIsUserCheckable);
+                item->setData(Qt::Unchecked, Qt::CheckStateRole);
+                m_todo_model->appendRow(item);
+            }
+        }
+    });
+
+    connect(m_line, &QLineEdit::returnPressed, m_task_add_button, &QPushButton::click);
+
+    connect(m_todo_view, &QAbstractItemView::doubleClicked, this, [this] (const QModelIndex& index) {
+        QString current = index.data(Qt::DisplayRole).toString();
+        bool ok{};
+        QString updated_todo = QInputDialog::getText(this, "Edit Todo", "Enter new todo", QLineEdit::Normal, current, &ok);
+        if (ok && !updated_todo.isEmpty()) {
+            m_todo_model->setData(index, updated_todo);
+        }
+    });
 }
