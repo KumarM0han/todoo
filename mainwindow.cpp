@@ -4,12 +4,12 @@
 #include <QObject>
 #include <QListView>
 #include <QVBoxLayout>
-#include <QStringListModel>
 #include <QStringList>
 #include <QLineEdit>
 #include <QShortcut>
 #include <QPushButton>
 #include <QInputDialog>
+#include <QStandardItemModel>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -24,18 +24,16 @@ MainWindow::MainWindow(QWidget *parent)
     line->setMaxLength(256);
 
     QPushButton *add_todo_button = new QPushButton("Add", this);
-    QStringListModel* todos = new QStringListModel(this);
-    QStringList todo;
-    todos->setStringList(todo);
-    QListView *l = new QListView(this);
-    l->setModel(todos);
+    QStandardItemModel* todos_model = new QStandardItemModel(this);
+    QListView *l = new QListView(central_widget);
+    l->setModel(todos_model);
     l->setEditTriggers(QAbstractItemView::NoEditTriggers);
     connect(l, &QAbstractItemView::doubleClicked, this, [=] (const QModelIndex& index) {
         QString current = index.data(Qt::DisplayRole).toString();
         bool ok{};
         QString updated_todo = QInputDialog::getText(this, "Edit Todo", "Enter new todo", QLineEdit::Normal, current, &ok);
         if (ok && !updated_todo.isEmpty()) {
-            todos->setData(index, updated_todo);
+            todos_model->setData(index, updated_todo);
         }
     });
 
@@ -44,9 +42,10 @@ MainWindow::MainWindow(QWidget *parent)
             QString entered_line = line->text();
             if (entered_line.isEmpty() == false) {
                 line->clear();
-                int last = todos->rowCount();
-                todos->insertRow(last);
-                todos->setData(todos->index(last), entered_line);
+                QStandardItem *item = new QStandardItem(entered_line);
+                item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable | Qt::ItemIsUserCheckable);
+                item->setData(Qt::Unchecked, Qt::CheckStateRole);
+                todos_model->appendRow(item);
             }
         }
     });
